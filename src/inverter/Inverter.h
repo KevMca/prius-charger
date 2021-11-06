@@ -1,5 +1,5 @@
-#ifndef TRAPCONTROL_H
-#define TRAPCONTROL_H
+#ifndef INVERTER_H
+#define INVERTER_H
 
 #include "hardware_api.h"
 

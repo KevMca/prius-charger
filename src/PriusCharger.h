@@ -7,8 +7,8 @@
  *
 */
 
-#ifndef TRAPCONTROL_H
-#define TRAPCONTROL_H
+#ifndef PRIUSCHARGER_H
+#define PRIUSCHARGER_H
 
 #include "inverter/Inverter.h"
 
