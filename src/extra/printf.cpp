@@ -35,7 +35,6 @@
 
 #include "printf.h"
 
-
 // define this globally (e.g. gcc -DPRINTF_INCLUDE_CONFIG_H ...) to include the
 // printf_config.h header file
 // default: undefined
@@ -858,6 +857,13 @@ static int _vsnprintf(out_fct_type out, char* buffer, const size_t maxlen, const
 
 
 ///////////////////////////////////////////////////////////////////////////////
+
+static Print* print_instance = &Serial;
+
+void _putchar(char character)
+{
+	print_instance->print(character);
+}
 
 int printf_(const char* format, ...)
 {

@@ -34,6 +34,8 @@
 
 #include <stdarg.h>
 #include <stddef.h>
+#include "Print.h"
+#include "Arduino.h"
 
 
 #ifdef __cplusplus
