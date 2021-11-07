@@ -11,5 +11,6 @@
 #define PRIUSCHARGER_H
 
 #include "inverter/Inverter.h"
+#include "extras/printf.h"
 
 #endif
