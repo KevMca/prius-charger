@@ -3,4 +3,8 @@
 
 #include "Arduino.h"
 
+float _adcToVoltage(int val);
+void _converterPWMSetup(int CPWM);
+void _converterPWMDuty(float duty, int CPWM);
+
 #endif
