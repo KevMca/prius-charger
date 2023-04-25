@@ -2,6 +2,7 @@
 
 #if defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328PB__) 
 
+// Timer pins
 #define OC0A 6
 #define OC0B 5
 #define OC1A 9
@@ -10,15 +11,69 @@
 #define OC2B 3
 
 int adcResolution = 10;     // number of resolution bits in the ADC
-float operatingVoltage = 5.15; // operating voltage of the ADC
+//float operatingVoltage = 5; // operating voltage of the ADC
 
-float _adcToVoltage(int val) {
-    float decimal = (float)val/(float)pow(2,adcResolution);
-    float voltage = decimal*operatingVoltage;
-    return voltage;
+bool _adcSetup() {
+    // analog signal pin setup
+    pinMode(GIVA, INPUT);
+    pinMode(GIWA, INPUT);
+    pinMode(VH,   INPUT);
+    pinMode(VL,   INPUT);
+    pinMode(CT,   INPUT);
+    pinMode(GIVT, INPUT);
+
+    // setup AdcExtern
+    AdcExtern.begin(ADS1115_DEFAULT_ADDRESS);
+    AdcExtern.setGain(ADS1115_REG_CONFIG_PGA_6_144V);    //Set the largest voltage range
+    AdcExtern.setSampleRate(ADS1115_REG_CONFIG_DR_8SPS); //Set the slowest and most accurate sample rate
+
+    //Test to see if you can communicate to the AdcExtern
+    if (!AdcExtern.testConnection()) {
+      Serial.println("AdcExtern Connection failed"); //oh man...something is wrong
+      return 1;
+    }
+
+    return 0;
 }
 
-void _converterPWMSetup(int CPWM) {
+int _analogRead(int pin) {
+    // If using internal ADC
+    if(pin > 3) {
+        return analogRead(pin);
+    }
+    // If using ADS1115 pins 0 to 3
+    else {
+        switch(pin) {
+            case 0: {AdcExtern.setMux(ADS1115_REG_CONFIG_MUX_SINGLE_0);}
+            break;
+            case 1: {AdcExtern.setMux(ADS1115_REG_CONFIG_MUX_SINGLE_1);}
+            break;
+            case 2: {AdcExtern.setMux(ADS1115_REG_CONFIG_MUX_SINGLE_2);}
+            break;
+            case 3: {AdcExtern.setMux(ADS1115_REG_CONFIG_MUX_SINGLE_3);}
+            break;
+            default: {AdcExtern.setMux(ADS1115_REG_CONFIG_MUX_SINGLE_0);}
+            break;
+        }
+        AdcExtern.triggerConversion();
+        return AdcExtern.getConversion();
+    }
+}
+
+float _readVcc() {
+    long result;
+    // Read 1.1V reference against AVcc
+    ADMUX = _BV(REFS0) | _BV(MUX3) | _BV(MUX2) | _BV(MUX1);
+    delay(2); // Wait for Vref to settle
+    ADCSRA |= _BV(ADSC); // Convert
+    while (bit_is_set(ADCSRA, ADSC));
+    result = ADCL;
+    result |= ADCH << 8;
+    result = 1126400L / result; // Calculate Vcc (in mV); 1126400 = 1.1*1024*1000
+    return (float)result/1000;
+}
+
+void _converterPWMSetup() {
     // TCCRB
     // Set phase-correct PWM (WGM02=0) and prescaler to 8 (CS02=0, CS01=1, CS00=0)
     uint8_t TCCRB_set = bit(CS21);
@@ -63,7 +118,7 @@ void _converterPWMSetup(int CPWM) {
     }
 }
 
-void _converterPWMDuty(float duty, int CPWM) {
+void _converterPWMDuty(float duty) {
     // Timer 0
     if (CPWM == OC0A) {
         OCR0A = (uint8_t)(255*duty);
